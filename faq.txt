@@ -1,0 +1,20 @@
+Q: What are your opening hours?
+A: We are open from 12 PM to 11 PM every day.
+
+Q: Do you have parking?
+A: Yes we have free parking for up to 2 hours.
+
+Q: Do you accept reservations?
+A: Yes we accept reservations up to 30 days in advance.
+
+Q: What payment methods do you accept?
+A: We accept cash, credit cards and mobile payments.
+
+Q: Is there a dress code?
+A: Smart casual dress code applies after 7 PM.
+
+Q: Do you have wifi?
+A: Yes we have free wifi for all customers.
+
+Q: Can I bring my own cake?
+A: Yes you can bring your own cake for special occasions.

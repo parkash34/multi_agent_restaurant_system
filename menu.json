@@ -1,0 +1,12 @@
+{
+    "pizzas": ["Margherita", "Pepperoni", "Vegetarian", "Spicy Chicken"],
+    "pastas": ["Carbonara", "Bolognese", "Vegan Arrabbiata"],
+    "desserts": ["Tiramisu", "Gelato", "Panna Cotta"],
+    "drinks": ["Water", "Juice", "Wine", "Beer"],
+    "prices": {
+        "pizzas": "$12-$18",
+        "pastas": "$10-$16",
+        "desserts": "$6-$10",
+        "drinks": "$2-$8"
+    }
+}
