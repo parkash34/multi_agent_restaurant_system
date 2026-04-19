@@ -183,7 +183,9 @@ used to personalize future visits
 - Maximum 8 people per table booking
 
 ## Environment Variables
+```
 API_KEY=your_groq_api_key_here
+```
 
 ## Notes
 
