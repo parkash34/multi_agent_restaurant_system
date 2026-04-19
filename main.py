@@ -48,8 +48,8 @@ restaurant = {
 
 
 def init_db():
-    """Initialize database and create tables if they don't exist."""
-
+    """Initialize database and create two tables if they don't exist."""
+    
     connect = sqlite3.connect("restaurant.db")
     cursor = connect.cursor()
 
@@ -64,31 +64,10 @@ def init_db():
             reference INTEGER
         )
     """)
-    connect.commit()
-    connect.close()
 
-def init_db():
-    """Initialize database and create two tables if they don't exist."""
-    
-    connect = sqlite3.connect("restaurant.db")
-    cursor1 = connect.cursor()
-    cursor2 = connect.cursor()
-
-    cursor1.execute("""
-        CREATE TABLE IF NOT EXISTS reservations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            date TEXT,
-            time, TEXT,
-            people INTEGER,
-            special_requirement TEXT,
-            reference INTEGER
-        )
-    """)
-
-    cursor2.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS customer_preferences (
-            id INTEGER PRIMARY KEY AUTOINCREMENT
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE,
             dietary_requirement TEXT,
             visit_count INTEGER DEFAULT 0
@@ -127,6 +106,175 @@ def read_menu():
         return "Menu file not found"
     except Exception as e:
         return f"Error reading menu: {str(e)}"
+
+@tool
+def check_dietary_options(requirement: str):
+    """It checks whether specific deitary option is available or not.
+    Use this for any dietary related questions"""
+
+    dietary_options = ["vegetarian", "vegan", "gluten_free"]
+
+    requirement = requirement.lower()
+
+    if requirement in dietary_options:
+        return f"Yes, we have available {requirement} option"
+    
+    return f"No, we don't have {requirement} option available."
+
+@tool
+def save_customer_preference(name: str, dietary_requirement: str):
+    """Saves customer's peference that includes name, and dietary requirement."""
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+
+        cursor.execute("""
+            INSERT OR REPLACE Into customer_preferences
+            (name, dietary_requirement)
+            VALUES (?, ?)
+        """, (name, dietary_requirement)
+        )
+        connect.commit()
+        connect.close()
+        return f"Preference saved for {name}"
+    except Exception as e:
+        return f"Error saving customer's preference {str(e)}"
+
+
+@tool
+def check_availability(date: str, time: str):
+    """Checks if tables are available at a specific date and time.
+    Use this before booking to verify availability.
+    """
+    return f"yes, we have tables are available on {date} at {time}."
+
+@tool
+def book_table(date: str, time: str, people: str, special_requirement: str):
+    """Books a table at the restaurants.
+    Use this when customer wants to make a reservation.
+    Requires date, time and number of people.
+    Maximum 8 people per table
+    """
+    people = int(people)
+    if people > 8:
+        return "Sorry, maximum 8 people per table."
+    if people < 1:
+        return "Please, provide a valid number of people"
+    
+    ref = random.randint(1000,9999)
+    return f"Table booked! Reference number : {ref}. Date: {date}, Time: {time}, People: {people}."
+
+@tool
+def save_reservation(name: str, date: str, time: str, people: str, reference: str, special_requirement: str):
+    """Saves a reservation to the database.
+    Use this after booking a table to store the reservation permanently."""
+    try:
+        people = int(people)
+        reference = int(reference)
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute("""
+            INSERT INTO reservations
+            (name, date, time, people, special_requirement, reference)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (name, date, time, people, special_requirement, reference))
+        connect.commit()
+        connect.close()
+        return f"Reversation saved successfully for {name}. Reference: {reference}"
+    except Exception as e:
+        return f"Error saving reservation: {str(e)}"
+    
+
+@tool
+def get_reservation(name: str):
+    """Retrieves reservation details for a customer by name.
+    Use this when customer asks about their existing reservation."""
+
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute("SELECT * FROM reservations WHERE name = ?", (name,)) 
+
+        rows = cursor.fetchall()
+        connect.close()
+
+        if not rows:
+            return f"No reservation found for {name}."
+        
+        result = f"Reservation for {name}:\n"
+        for row in rows:
+            result += f"Date: {row[2]}, Time: {row[3]}, People: {row[4]}, Reference: {row[6]}"
+        return result
+    except Exception as e:
+        return f"Error retrieving reservation: {str(e)}"
+
+@tool
+def cancel_reservation(reference):
+    """Cancels a reservation by reference number.
+    Use this when customer wants to cancel their booking."""
+
+    try:
+        connect = sqlite3.connect("restaurant.db")
+        cursor = connect.cursor()
+        cursor.execute(
+            "DELETE FROM reservations WHERE reference = ?", (reference,)
+        )
+        if cursor.rowcount == 0:
+            connect.close()
+            return f"No reservation found with reference {reference}."
+        
+        connect.commit()
+        connect.close()
+        return f"Reservation {reference} cancelled successfully."
+    except Exception as e:
+        return f"Error cancelling reservation {str(e)}"
+
+@tool
+def read_faq():
+    """Reads the restaurant FAQ document.
+    Use this when customer ask frequently asked questions."""
+
+    try:
+        with open("faq.txt", "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "FAQ document not found."
+    except Exception as e:
+        return f"Error reading FAQ: {str(e)}"
+
+@tool
+def get_restaurant_info():
+    """Returns restaurants Information
+    Use this for restaurant information"""
+    return f"Name: {restaurant['name']}\nOpening Hours: {restaurant['opening_hours']}\nLocation: {restaurant['location']}\nPhone: {restaurant['phone']}"
+
+
+@tool
+def get_weather(city: str) -> str:
+    """Gets current weather for a city."""
+    try:
+        response = requests.get(
+            f"https://wttr.in/{city}?format=3",
+            timeout=5
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.Timeout:
+        return "Weather service timed out. Please try again."
+    except requests.exceptions.ConnectionError:
+        return "Cannot connect to weather service."
+    except Exception as e:
+        return f"Error getting weather: {str(e)}"
+
+
+
+
+
+
+
+
+
+
 
 
 menu_prompt = """You are Marco, a menu specialist for Bella Italia restaurant.
