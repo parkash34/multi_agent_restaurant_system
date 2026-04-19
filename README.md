@@ -33,6 +33,7 @@ right agent automatically.
 | python-dotenv | Environment variable management |
 
 ## Project Structure
+```
 bella-italia-multi-agent/
 │
 ├── env/
@@ -42,24 +43,35 @@ bella-italia-multi-agent/
 ├── restaurant.db      ← created automatically
 ├── .env
 └── requirements.txt
+```
 
 ## Setup
 
 1. Clone the repository
+```
 git clone https://github.com/yourusername/bella-italia-multi-agent
+```
 
 2. Create and activate virtual environment
+```
 python -m venv env
 env\Scripts\activate
+```
 
 3. Install dependencies
+```
 pip install -r requirements.txt
+```
 
 4. Create `.env` file and add your Groq API key
+```
 API_KEY=your_groq_api_key_here
+```
 
 5. Run the server
+```
 uvicorn main:app --reload
+```
 
 ## API Endpoint
 
@@ -113,6 +125,7 @@ Handles general restaurant questions.
 | `get_weather` | Gets weather from wttr.in |
 
 ## Routing System
+```
 Customer message
 ↓
 LLM Router classifies message
@@ -122,6 +135,7 @@ reservation → Sofia handles it
 faq         → Luca handles it
 ↓
 Response returned with routed_to field
+```
 
 ## Database Schema
 
@@ -145,18 +159,22 @@ CREATE TABLE customer_preferences (
 ```
 
 ## Memory System
+```
 Short Term  →  conversation history per session
 shared across all three agents
 resets on server restart
 Long Term   →  customer preferences in database
 persists permanently
 used to personalize future visits
+```
 
 ## Files
+```
 
 **menu.json** — restaurant menu updated without code changes
 
 **faq.txt** — frequently asked questions updated without code changes
+```
 
 ## Validation Rules
 
