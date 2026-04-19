@@ -195,5 +195,6 @@ API_KEY=your_groq_api_key_here
 - Session memory resets when server restarts
 - Each agent only handles its area of responsibility
 
+## 👤 Author
 
 **Ohm Parkash** — [LinkedIn](https://www.linkedin.com/in/om-parkash34/) · [GitHub](https://github.com/parkash34)
