@@ -393,9 +393,9 @@ def ai_chat(message : Message):
 
     history = get_history(session_id)
 
-    history.append(HumanMessage(content=message.message))
+    history.append(HumanMessage(content=user_message))
 
-    route = route_message(message=message.message)
+    route = route_message(message=user_message)
 
     result = agents[route].invoke({"messages": history})
     ai_message = result["messages"][-1]
