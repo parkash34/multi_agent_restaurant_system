@@ -108,7 +108,7 @@ def read_menu():
         return f"Error reading menu: {str(e)}"
 
 @tool
-def check_dietary_options(requirement: str):
+def check_dietary_options(requirement: str) -> str:
     """It checks whether specific deitary option is available or not.
     Use this for any dietary related questions"""
 
@@ -122,8 +122,9 @@ def check_dietary_options(requirement: str):
     return f"No, we don't have {requirement} option available."
 
 @tool
-def save_customer_preference(name: str, dietary_requirement: str):
-    """Saves customer's peference that includes name, and dietary requirement."""
+def save_customer_preference(name: str, dietary_requirement: str) -> str:
+    """Saves customer dietary preference for future visits.
+    Use this when customer mentions they are vegan, vegetarian etc."""
     try:
         connect = sqlite3.connect("restaurant.db")
         cursor = connect.cursor()
@@ -138,18 +139,18 @@ def save_customer_preference(name: str, dietary_requirement: str):
         connect.close()
         return f"Preference saved for {name}"
     except Exception as e:
-        return f"Error saving customer's preference {str(e)}"
+        return f"Error saving preference {str(e)}"
 
 
 @tool
-def check_availability(date: str, time: str):
+def check_availability(date: str, time: str) -> str:
     """Checks if tables are available at a specific date and time.
     Use this before booking to verify availability.
     """
     return f"yes, we have tables are available on {date} at {time}."
 
 @tool
-def book_table(date: str, time: str, people: str, special_requirement: str):
+def book_table(date: str, time: str, people: str, special_requirement: str) -> str:
     """Books a table at the restaurants.
     Use this when customer wants to make a reservation.
     Requires date, time and number of people.
@@ -165,7 +166,7 @@ def book_table(date: str, time: str, people: str, special_requirement: str):
     return f"Table booked! Reference number : {ref}. Date: {date}, Time: {time}, People: {people}."
 
 @tool
-def save_reservation(name: str, date: str, time: str, people: str, reference: str, special_requirement: str):
+def save_reservation(name: str, date: str, time: str, people: str, reference: str, special_requirement: str) -> str:
     """Saves a reservation to the database.
     Use this after booking a table to store the reservation permanently."""
     try:
@@ -186,7 +187,7 @@ def save_reservation(name: str, date: str, time: str, people: str, reference: st
     
 
 @tool
-def get_reservation(name: str):
+def get_reservation(name: str) -> str:
     """Retrieves reservation details for a customer by name.
     Use this when customer asks about their existing reservation."""
 
@@ -209,11 +210,12 @@ def get_reservation(name: str):
         return f"Error retrieving reservation: {str(e)}"
 
 @tool
-def cancel_reservation(reference):
+def cancel_reservation(reference: str) -> str:
     """Cancels a reservation by reference number.
     Use this when customer wants to cancel their booking."""
 
     try:
+        reference = int(reference)
         connect = sqlite3.connect("restaurant.db")
         cursor = connect.cursor()
         cursor.execute(
@@ -267,14 +269,9 @@ def get_weather(city: str) -> str:
         return f"Error getting weather: {str(e)}"
 
 
-
-
-
-
-
-
-
-
+menu_tools = [read_menu, check_dietary_options, save_customer_preference]
+reservation_tools = [check_availability, book_table, save_reservation, get_reservation, cancel_reservation]
+faq_tools = [read_faq, get_restaurant_info, get_weather]
 
 
 menu_prompt = """You are Marco, a menu specialist for Bella Italia restaurant.
@@ -337,3 +334,72 @@ RULES:
 TONE: Helpful, friendly and informative.
 """
 
+menu_agent = create_react_agent(
+    llm, menu_tools, prompt=menu_prompt
+)
+
+reservation_agent = create_react_agent(
+    llm, reservation_tools, prompt=reservation_prompt
+)
+
+faq_agent = create_react_agent(
+    llm, faq_tools, prompt=faq_prompt
+)
+
+agents = {
+    "menu": menu_agent,
+    "reservation": reservation_agent,
+    "faq": faq_agent
+}
+
+def route_message(message: str) -> str:
+    response = llm.invoke([
+        HumanMessage(content=f"""
+        Classify this message into: menu, reservation, or faq.
+
+        Example:
+        "Do you have pizza?" → menu
+        "What vegan options do you have?" → menu
+        "Book a table for 4" → reservation
+        "Cancel my booking" → reservation
+        "What time do you open?" → faq
+        "Do you have parking?" → faq
+        "What is the weather?" → faq
+        
+        Message: {message}
+        Reply with only one word
+    """)
+    ])
+
+    route = response.content.strip().lower()
+
+    if route not in ["menu", "reservation", "faq"]:
+        return "faq"
+    
+    return route
+
+def get_history(session_id: str):
+    if session_id not in sessions:
+        sessions[session_id] = []
+        
+    return sessions[session_id]
+
+
+@app.post("/chat")
+def ai_chat(message : Message):
+
+    session_id = message.session_id
+    user_message = message.message
+
+    history = get_history(session_id)
+
+    history.append(HumanMessage(content=message.message))
+
+    route = route_message(message=message.message)
+
+    result = agents[route].invoke({"messages": history})
+    ai_message = result["messages"][-1]
+
+    history.append(ai_message)
+
+    return {"output": ai_message.content, "routed_to": route}
