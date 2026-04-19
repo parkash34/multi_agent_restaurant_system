@@ -194,3 +194,6 @@ API_KEY=your_groq_api_key_here
 - Menu and FAQ can be updated without changing code
 - Session memory resets when server restarts
 - Each agent only handles its area of responsibility
+
+
+**Ohm Parkash** — [LinkedIn](https://www.linkedin.com/in/om-parkash34/) · [GitHub](https://github.com/parkash34)
